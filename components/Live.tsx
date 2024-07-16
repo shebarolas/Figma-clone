@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import LiveCursor from './Cursor/LiveCursor'
 import { useMyPresence, useOthers } from '@liveblocks/react'
 import CursorChat from './Cursor/CursorChat';
@@ -8,7 +8,7 @@ export default function Live() {
     const others = useOthers();
     const [{cursor}, updateMyPresence] = useMyPresence() as any;
     const [cursorState, setCursorState] = useState({
-        cursor: CursorMode.Hidden
+        mode: CursorMode.Hidden,
     });
 
     const handlePointerMove = useCallback((event : React.PointerEvent) =>{
@@ -25,7 +25,7 @@ export default function Live() {
     },[])
     const handlePointerLeave = useCallback((event : React.PointerEvent) =>{
         setCursorState({
-            cursor: CursorMode.Hidden
+            mode: CursorMode.Hidden
         })
 
        updateMyPresence({
@@ -47,7 +47,37 @@ export default function Live() {
 
     },[])
     
-    
+   useEffect(() => {
+    const onKeyUp = (e: KeyboardEvent) =>{
+        console.log(e.key);
+        if(e.key === '/'){
+            setCursorState({
+                mode: CursorMode.Chat,
+                previousMessage: null,
+                message: ''
+            })
+        }else if(e.key === 'Escape'){
+            setCursorState({
+                mode: CursorMode.Hidden
+            })
+            updateMyPresence({
+                message: ''
+            })
+        }
+    }
+    const onKeyDown = (e: KeyboardEvent) =>{
+        if(e.key === '/'){
+            e.preventDefault();
+        }
+    }
+
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+        window.removeEventListener('keyup', onKeyUp);
+        window.removeEventListener('keydown', onKeyDown);
+    }
+  }, [updateMyPresence])
 
     return (
         <div onPointerMove={handlePointerMove} onPointerLeave={handlePointerLeave} onPointerDown={handlePointerDown} className="bg-slate-500 h-screen w-full flex justify-center items-center text-center">
